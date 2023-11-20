@@ -1,5 +1,3 @@
-//! This example shows that you can use egui in parallel from multiple threads.
-
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 
