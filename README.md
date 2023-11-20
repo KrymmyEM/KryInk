@@ -1,2 +1,2 @@
 # ruint
-Mini paint on rust with useless egui
+Mini paint on rust with egui
