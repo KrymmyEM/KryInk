@@ -1,3 +1,5 @@
+//! This example shows that you can use egui in parallel from multiple threads.
+
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 
@@ -108,42 +110,7 @@ impl eframe::App for MyApp{
             }
 
          });
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            ui.label("Hello World! This is small paint");
-            ui.horizontal(|ui_h: &mut egui::Ui|{
-                if ui_h.button("new").clicked(){
-                    self.min_painter = None;
-                    self.max_painter = None;
-                    self.rect_painter = None;
-                    self.path_pos = Vec::new();
-                    self.shapes = Vec::new();
-                }
-                if ui_h.button("increase 1 pix").clicked(){
-                    self.add_pixel_size(1.);
-                }
-                if ui_h.button("increase 10 pix").clicked(){
-                    self.add_pixel_size(10.);
-                }
-                if ui_h.button("reduce 1 pix").clicked(){
-                    self.lower_pixel_size(1.);
-                }
-                if ui_h.button("reduce 10 pix").clicked(){
-                    self.lower_pixel_size(10.);
-                }
-                if ui_h.button("undo").clicked(){
-                    self.undo();
-                }
-                if ui_h.button("undo 10").clicked(){
-                    for _ in 0..11{
-                        self.undo();
-                    }
-                }
-                if ui_h.button("clear").clicked(){
-                    self.shapes = Vec::new();
-                }
-
-            });
-         });
+        
          egui::CentralPanel::default().show(ctx, |ui| {
             ui.label("Hello World!");
             let painter = ui.painter();
@@ -182,8 +149,10 @@ impl eframe::App for MyApp{
                                     self.shapes.push(Shape::line(self.path_pos.to_vec(), 
                                                                  Stroke::new(0.1*self.pixel_size, 
                                                                             Color32::BLACK)));
-                                    
-                                    if self.path_pos.len() == 10{
+                                    self.shapes.push(Shape::circle_filled(self.pointer_pos, 
+                                                    (0.1*self.pixel_size)/2.0, 
+                                                    Color32::BLACK));
+                                    if self.path_pos.len() == 2{
                                         let last_pos = self.path_pos.pop().unwrap();
                                         self.path_pos = Vec::new();
                                         self.path_pos.push(last_pos);
@@ -209,6 +178,44 @@ impl eframe::App for MyApp{
             let mut local_shapes = self.shapes.clone().into_iter();
             painter.extend(local_shapes);
          });
+
+         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            ui.label("Hello World! This is small paint");
+            ui.horizontal(|ui_h: &mut egui::Ui|{
+                if ui_h.button("new").clicked(){
+                    self.min_painter = None;
+                    self.max_painter = None;
+                    self.rect_painter = None;
+                    self.path_pos = Vec::new();
+                    self.shapes = Vec::new();
+                }
+                if ui_h.button("increase 1 pix").clicked(){
+                    self.add_pixel_size(1.);
+                }
+                if ui_h.button("increase 10 pix").clicked(){
+                    self.add_pixel_size(10.);
+                }
+                if ui_h.button("reduce 1 pix").clicked(){
+                    self.lower_pixel_size(1.);
+                }
+                if ui_h.button("reduce 10 pix").clicked(){
+                    self.lower_pixel_size(10.);
+                }
+                if ui_h.button("undo").clicked(){
+                    self.undo();
+                }
+                if ui_h.button("undo 10").clicked(){
+                    for _ in 0..11{
+                        self.undo();
+                    }
+                }
+                if ui_h.button("clear").clicked(){
+                    self.shapes = Vec::new();
+                }
+
+            });
+         });
+
          egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             ui.horizontal(|ui_h: &mut egui::Ui|{
                 ui_h.label(format!("Pointer position: x: {} | y:{}", self.pointer_pos.x.round(), self.pointer_pos.y.round()));
