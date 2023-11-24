@@ -4,7 +4,7 @@
 
 
 use eframe::egui;
-use egui::{Pos2, Rect, Painter, Shape, Color32, Rounding, epaint::PathShape, Stroke, ViewportInfo};
+use egui::{Pos2, Rect, Painter, Shape, Color32, Rounding, epaint::PathShape, Stroke, ViewportInfo, Vec2};
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -25,12 +25,11 @@ struct BaseWindow{
     canvas: Vec<Shape>,
     shapes: Vec<Shape>,
     pointer_pos: Pos2,
-    origin_pos: Pos2
+    origin_pos: Option<Vec2>
 }
 
 impl BaseWindow{
     fn new() -> BaseWindow {
-        //let monitor_data = ViewportInfo;
         Self {
             pixel_size: 10.,
             height: None,
@@ -39,7 +38,7 @@ impl BaseWindow{
             canvas: Vec::new(),
             shapes: Vec::new(),
             pointer_pos: Pos2::ZERO,
-            origin_pos: Pos2::ZERO
+            origin_pos: None,
          }
     }
     
@@ -68,7 +67,16 @@ impl BaseWindow{
 
 impl eframe::App for BaseWindow{
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame){
-         egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            if self.origin_pos.is_none(){
+                let monitor_data = ui.available_size();
+                println!("{:?}", monitor_data);
+                let mut origin_pos_local = monitor_data;
+                origin_pos_local.x = ((monitor_data.x.floor()/2.0) as i32) as f32;
+                origin_pos_local.y = ((monitor_data.y.floor()/2.0) as i32) as f32;
+                println!("{:?}",origin_pos_local);
+                self.origin_pos = Some(origin_pos_local);
+            }
             let painter = ui.painter();
             ctx.input(|input| {
                 if input.pointer.is_moving(){
@@ -90,7 +98,7 @@ impl eframe::App for BaseWindow{
                 let primary_button_pressed = input.pointer.primary_down();
                 let pointer_press = input.pointer.press_origin();
                 if primary_button_pressed {
-                   
+                    
                 }
             });
             ctx.input(|input|{
@@ -101,9 +109,9 @@ impl eframe::App for BaseWindow{
                     
             let mut local_shapes = self.shapes.clone().into_iter();
             painter.extend(local_shapes);
-         });
-
-         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            });
+    
+            egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             ui.label("Hello World! This is small paint");
             ui.horizontal(|ui_h: &mut egui::Ui|{
                 if ui_h.button("new").clicked(){
@@ -137,15 +145,17 @@ impl eframe::App for BaseWindow{
                 if ui_h.button("clear").clicked(){
                     self.shapes = Vec::new();
                 }
-
+    
             });
-         });
-
-         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+            });
+    
+            egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             ui.horizontal(|ui_h: &mut egui::Ui|{
                 ui_h.label(format!("Pointer position: x: {} | y:{}", self.pointer_pos.x.floor(), self.pointer_pos.y.floor()));
-                ui_h.label(format!("Canvas size: height: {} | width:{}", self.height.unwrap(), self.width.unwrap()));
+                if self.height.is_some() && self.width.is_some(){
+                    ui_h.label(format!("Canvas size: height: {} | width:{}", self.height.unwrap(), self.width.unwrap()));
+                }
             });
-         });
+            });
     }
 }
