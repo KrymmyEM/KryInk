@@ -1,0 +1,85 @@
+        ctx.input(|input|{
+            if input.pointer.button_clicked(egui::PointerButton::Primary){
+                let pointer_press = input.pointer.press_origin();
+                if pointer_press.is_some(){
+                    match self.min_painter.is_none() {
+                        true => {
+                            self.min_painter = pointer_press;
+                        },
+                        fasle => {
+                            match self.max_painter.is_none() {
+                                true => {
+                                    let min_click: Pos2 = self.min_painter.unwrap();
+                                    self.max_painter = pointer_press;
+                                    let max_click: Pos2 = self.max_painter.unwrap();
+                                    let cheker: [bool; 3] = [ min_click.x > max_click.x, 
+                                                              min_click.y < max_click.y, 
+                                                              min_click.y > max_click.y && min_click.x < max_click.x];
+                                    
+                                    match cheker {
+                                        [true, false, false] => {
+                                            self.min_painter = Some(Pos2 { x: max_click.x.floor(), y: max_click.y.floor() });
+                                            self.max_painter = Some(Pos2 { x: min_click.x.floor(), y: min_click.y.floor() });
+                                        },
+                                        [true, true, false] => {
+                                            let local_min: Pos2 = Pos2 { x: max_click.x.floor(), y: min_click.y.floor() };
+                                            let local_max: Pos2 = Pos2 { x: min_click.x.floor(), y: max_click.y.floor() };
+                                            self.min_painter = Some(local_min);
+                                            self.max_painter = Some(local_max);
+                                        },
+                                        [false, false, true] => {
+                                            let local_min: Pos2 = Pos2 { x: min_click.x.floor(), y: max_click.y.floor() };
+                                            let local_max: Pos2 = Pos2 { x: max_click.x.floor(), y: min_click.y.floor() };
+                                            self.min_painter = Some(local_min);
+                                            self.max_painter = Some(local_max);
+                                        },
+                                        _ => {}
+                                    }
+                                    if false {
+
+                                    }
+                                },
+                                _ => {}
+                            }
+                        },
+                        _ => {
+
+                        },
+                    }
+                }
+            }
+
+         });
+
+
+
+
+
+
+
+
+
+===================
+if self.pointer_pos.x != 0. && self.pointer_pos.y != 0.{
+    let pointer_pos = self.pointer_pos;
+    let min_pos = self.min_painter.unwrap();
+    let max_pos = self.max_painter.unwrap();
+    let bool_paint_r_t: bool = pointer_pos.x > min_pos.x && pointer_pos.y > min_pos.y;
+    let bool_paint_l_b: bool = pointer_pos.x < max_pos.x && pointer_pos.y < max_pos.y;
+    if bool_paint_l_b && bool_paint_r_t{
+        self.path_pos.push(pointer_pos);
+        self.shapes.push(Shape::line(self.path_pos.to_vec(), 
+                                        Stroke::new(0.1*self.pixel_size, 
+                                                Color32::BLACK)));
+        self.shapes.push(Shape::circle_filled(self.pointer_pos, 
+                        (0.1*self.pixel_size)/2.0, 
+                        Color32::BLACK));
+        if self.path_pos.len() == 2{
+            let last_pos = self.path_pos.pop().unwrap();
+            self.path_pos = Vec::new();
+            self.path_pos.push(last_pos);
+        }
+    }
+    else {
+        self.path_pos = Vec::new();
+    }

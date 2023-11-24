@@ -4,7 +4,7 @@
 
 
 use eframe::egui;
-use egui::{Pos2, Rect, Painter, Shape, Color32, Rounding, epaint::PathShape, Stroke};
+use egui::{Pos2, Rect, Painter, Shape, Color32, Rounding, epaint::PathShape, Stroke, ViewportInfo};
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -12,31 +12,34 @@ fn main() -> Result<(), eframe::Error> {
     eframe::run_native(
         "My small paint",
         options,
-        Box::new(|_cc| Box::new(MyApp::new())),
+        Box::new(|_cc| Box::new(BaseWindow::new())),
     )
 }
 
 
-struct MyApp{
+struct BaseWindow{
     pixel_size: f32,
-    min_painter: Option<Pos2>,
-    max_painter: Option<Pos2>,
-    rect_painter: Option<Rect>,
+    height: Option<i32>,
+    width: Option<i32>,
     path_pos: Vec<Pos2>,
+    canvas: Vec<Shape>,
     shapes: Vec<Shape>,
     pointer_pos: Pos2,
+    origin_pos: Pos2
 }
 
-impl MyApp{
-    fn new() -> MyApp {
+impl BaseWindow{
+    fn new() -> BaseWindow {
+        //let monitor_data = ViewportInfo;
         Self {
             pixel_size: 10.,
-            min_painter: None,
-            max_painter: None,
-            rect_painter: None,
+            height: None,
+            width: None,
             path_pos: Vec::new(),
+            canvas: Vec::new(),
             shapes: Vec::new(),
             pointer_pos: Pos2::ZERO,
+            origin_pos: Pos2::ZERO
          }
     }
     
@@ -54,65 +57,18 @@ impl MyApp{
     pub fn undo(&mut self){
         let _ = self.shapes.pop();
     }
+
+    fn draw_canvas(&mut self, height: i32, width: i32) -> Vec<Shape>{
+        let pixels: Vec<Shape> = Vec::new();
+        
+        return pixels;
+    }
+
 }
 
-impl eframe::App for MyApp{
+impl eframe::App for BaseWindow{
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame){
-        ctx.input(|input|{
-            if input.pointer.button_clicked(egui::PointerButton::Primary){
-                let pointer_press = input.pointer.press_origin();
-                if pointer_press.is_some(){
-                    match self.min_painter.is_none() {
-                        true => {
-                            self.min_painter = pointer_press
-                        },
-                        fasle => {
-                            match self.max_painter.is_none() {
-                                true => {
-                                    let min_click: Pos2 = self.min_painter.unwrap();
-                                    self.max_painter = pointer_press;
-                                    let max_click: Pos2 = self.max_painter.unwrap();
-                                    let cheker: [bool; 3] = [ min_click.x > max_click.x, 
-                                                              min_click.y < max_click.y, 
-                                                              min_click.y > max_click.y && min_click.x < max_click.x];
-                                    
-                                    match cheker {
-                                        [true, false, false] => {
-                                            self.min_painter = Some(max_click);
-                                            self.max_painter = Some(min_click);
-                                        },
-                                        [true, true, false] => {
-                                            let local_min: Pos2 = Pos2 { x: max_click.x, y: min_click.y };
-                                            let local_max: Pos2 = Pos2 { x: min_click.x, y: max_click.y };
-                                            self.min_painter = Some(local_min);
-                                            self.max_painter = Some(local_max);
-                                        },
-                                        [false, false, true] => {
-                                            let local_min: Pos2 = Pos2 { x: min_click.x, y: max_click.y };
-                                            let local_max: Pos2 = Pos2 { x: max_click.x, y: min_click.y };
-                                            self.min_painter = Some(local_min);
-                                            self.max_painter = Some(local_max);
-                                        },
-                                        _ => {}
-                                    }
-                                    if false {
-
-                                    }
-                                },
-                                _ => {}
-                            }
-                        },
-                        _ => {
-
-                        },
-                    }
-                }
-            }
-
-         });
-        
          egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label("Hello World!");
             let painter = ui.painter();
             ctx.input(|input| {
                 if input.pointer.is_moving(){
@@ -125,56 +81,24 @@ impl eframe::App for MyApp{
                     }
                 }
             });
-            match self.rect_painter.is_none() {
-                true => {
-                    if self.min_painter.is_some() && self.max_painter.is_some(){
-                        self.rect_painter = Some(Rect::from_min_max(self.min_painter.unwrap(), self.max_painter.unwrap()));
-                        painter.rect_filled(self.rect_painter.unwrap(), Rounding::ZERO, Color32::GRAY);
-                    }
-                },
-                false => {
-                    painter.rect_filled(self.rect_painter.unwrap(), Rounding::ZERO, Color32::GRAY);
-                    ctx.input(|input|{
-                        let primary_button_pressed = input.pointer.primary_down();
-                        let pointer_press = input.pointer.press_origin();
-                        if primary_button_pressed {
-                            if self.pointer_pos.x != 0. && self.pointer_pos.y != 0.{
-                                let pointer_pos = self.pointer_pos;
-                                let min_pos = self.min_painter.unwrap();
-                                let max_pos = self.max_painter.unwrap();
-                                let bool_paint_r_t: bool = pointer_pos.x > min_pos.x && pointer_pos.y > min_pos.y;
-                                let bool_paint_l_b: bool = pointer_pos.x < max_pos.x && pointer_pos.y < max_pos.y;
-                                if bool_paint_l_b && bool_paint_r_t{
-                                    self.path_pos.push(pointer_pos);
-                                    self.shapes.push(Shape::line(self.path_pos.to_vec(), 
-                                                                 Stroke::new(0.1*self.pixel_size, 
-                                                                            Color32::BLACK)));
-                                    self.shapes.push(Shape::circle_filled(self.pointer_pos, 
-                                                    (0.1*self.pixel_size)/2.0, 
-                                                    Color32::BLACK));
-                                    if self.path_pos.len() == 2{
-                                        let last_pos = self.path_pos.pop().unwrap();
-                                        self.path_pos = Vec::new();
-                                        self.path_pos.push(last_pos);
-                                    }
-                                }
-                                else {
-                                    self.path_pos = Vec::new();
-                                }
-                            }
-                        }
-                    });
-                    ctx.input(|input|{
-                        if input.pointer.primary_released(){
-                            self.path_pos = Vec::new();
-                        }
-                    });
-                    
-                },
-                _ => {
-
-                }
+            if self.height.is_some() && self.width.is_some(){
+                        
+                painter.extend(self.draw_canvas(self.height.unwrap(), self.width.unwrap()).clone().into_iter());
             }
+            
+            ctx.input(|input|{
+                let primary_button_pressed = input.pointer.primary_down();
+                let pointer_press = input.pointer.press_origin();
+                if primary_button_pressed {
+                   
+                }
+            });
+            ctx.input(|input|{
+                if input.pointer.primary_released(){
+                    self.path_pos = Vec::new();
+                }
+            });
+                    
             let mut local_shapes = self.shapes.clone().into_iter();
             painter.extend(local_shapes);
          });
@@ -183,10 +107,10 @@ impl eframe::App for MyApp{
             ui.label("Hello World! This is small paint");
             ui.horizontal(|ui_h: &mut egui::Ui|{
                 if ui_h.button("new").clicked(){
-                    self.min_painter = None;
-                    self.max_painter = None;
-                    self.rect_painter = None;
+                    self.height = None;
+                    self.width = None;
                     self.path_pos = Vec::new();
+                    self.canvas = Vec::new();
                     self.shapes = Vec::new();
                 }
                 if ui_h.button("increase 1 pix").clicked(){
@@ -195,6 +119,7 @@ impl eframe::App for MyApp{
                 if ui_h.button("increase 10 pix").clicked(){
                     self.add_pixel_size(10.);
                 }
+                ui_h.add(egui::Slider::new(&mut self.pixel_size, 0.0..=5000.0).prefix("Pixel size:"));
                 if ui_h.button("reduce 1 pix").clicked(){
                     self.lower_pixel_size(1.);
                 }
@@ -218,8 +143,8 @@ impl eframe::App for MyApp{
 
          egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             ui.horizontal(|ui_h: &mut egui::Ui|{
-                ui_h.label(format!("Pointer position: x: {} | y:{}", self.pointer_pos.x.round(), self.pointer_pos.y.round()));
-                ui_h.label(format!("Pixel size: {}", self.pixel_size.round()))
+                ui_h.label(format!("Pointer position: x: {} | y:{}", self.pointer_pos.x.floor(), self.pointer_pos.y.floor()));
+                ui_h.label(format!("Canvas size: height: {} | width:{}", self.height.unwrap(), self.width.unwrap()));
             });
          });
     }
