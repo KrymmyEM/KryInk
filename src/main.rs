@@ -19,8 +19,8 @@ fn main() -> Result<(), eframe::Error> {
 
 struct BaseWindow{
     pixel_size: f32,
-    height: Option<i32>,
-    width: Option<i32>,
+    height: Option<f32>,
+    width: Option<f32>,
     path_pos: Vec<Pos2>,
     canvas: Vec<Shape>,
     shapes: Vec<Shape>,
@@ -57,9 +57,32 @@ impl BaseWindow{
         let _ = self.shapes.pop();
     }
 
-    fn draw_canvas(&mut self, height: i32, width: i32) -> Vec<Shape>{
-        let pixels: Vec<Shape> = Vec::new();
-        
+    fn draw_canvas(&mut self, height: f32, width: f32) -> Vec<Shape>{
+        let mut pixels: Vec<Shape> = Vec::new();
+        let half_height = height/2.0;
+        let half_width = width/2.0;
+        let mut start_pos = Pos2::ZERO;
+        if self.origin_pos.is_some(){
+            start_pos = self.origin_pos.unwrap().to_pos2();
+        }
+        if start_pos.x > half_width && start_pos.y > half_height {
+            start_pos.x -= half_width;
+            start_pos.y -= half_height;
+        }
+        for x in 0..width as i32{
+            let shape = Shape::rect_filled(Rect { min:Pos2 { x: start_pos.x + x as f32, y: start_pos.y }, 
+                max:Pos2 { x: start_pos.x + x as f32 +1., y: start_pos.y+1. }, }, 
+                Rounding::default(),
+                 Color32::WHITE);
+            pixels.push(shape);
+            for y in 0..height as i32{
+                let shape = Shape::rect_filled(Rect { min:Pos2 { x: start_pos.x + x as f32, y: start_pos.y + y as f32 }, 
+                    max:Pos2 { x: start_pos.x + x as f32 + 1., y: start_pos.y+ y as f32 + 1. }, }, 
+                    Rounding::default(),
+                     Color32::WHITE);
+                pixels.push(shape);
+            }
+        }
         return pixels;
     }
 
@@ -76,6 +99,8 @@ impl eframe::App for BaseWindow{
                 origin_pos_local.y = ((monitor_data.y.floor()/2.0) as i32) as f32;
                 println!("{:?}",origin_pos_local);
                 self.origin_pos = Some(origin_pos_local);
+                self.height = Some(100 as f32);
+                self.width = Some(100 as f32);
             }
             let painter = ui.painter();
             ctx.input(|input| {
