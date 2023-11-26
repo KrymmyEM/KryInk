@@ -107,10 +107,10 @@ impl BaseWindow{
         self.end_pos.x += half_width * self.zoom;
         self.end_pos.y += half_height * self.zoom;
         
-        let shape = Shape::rect_stroke(Rect { min:Pos2 { x: self.start_pos.x, y: self.start_pos.y}, 
+        let shape = Shape::rect_filled(Rect { min:Pos2 { x: self.start_pos.x, y: self.start_pos.y}, 
             max:Pos2 { x: self.end_pos.x, y: self.end_pos.y}, }, 
             Rounding::default(),
-                Stroke::new(0.5, Color32::WHITE));
+            Color32::WHITE);
         self.canvas = Some(shape);
 
     }
