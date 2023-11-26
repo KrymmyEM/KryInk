@@ -24,6 +24,12 @@ fn main() -> Result<(), eframe::Error> {
 }
 
 
+enum Tools {
+    mouse,
+    hand,
+    pen
+}
+
 struct BaseWindow{
     pixel_size: f32,
     height: Option<f32>,
@@ -35,10 +41,12 @@ struct BaseWindow{
     canvas: Vec<Shape>,
     canvas_ready: bool,
     shapes: Vec<Shape>,
+    start_pointer_pos: Pos2,
     pointer_pos: Pos2,
     zoom: f32,
     zoom_pos: Pos2,
-    origin_pos: Option<Vec2>
+    origin_pos: Option<Vec2>,
+    tool: Tools
 }
 
 impl BaseWindow{
@@ -54,10 +62,12 @@ impl BaseWindow{
             canvas: Vec::new(),
             canvas_ready: false,
             shapes: Vec::new(),
+            start_pointer_pos: Pos2::ZERO,
             pointer_pos: Pos2::ZERO,
             zoom: 1.,
             zoom_pos: Pos2::ZERO,
             origin_pos: None,
+            tool: Tools::mouse
          }
     }
     
@@ -98,6 +108,39 @@ impl BaseWindow{
         self.canvas.push(shape);
 
     }
+    
+    fn paint (&mut self){
+        if self.pointer_pos.x != 0. && self.pointer_pos.y != 0.{
+            let pointer_pos = self.pointer_pos;
+            let min_pos = self.start_pos;
+            let max_pos = self.end_pos;
+            let bool_paint_r_t: bool = pointer_pos.x > min_pos.x && pointer_pos.y > min_pos.y;
+            let bool_paint_l_b: bool = pointer_pos.x < max_pos.x && pointer_pos.y < max_pos.y;
+            if bool_paint_l_b && bool_paint_r_t{
+                self.path_pos.push(pointer_pos);
+                self.shapes.push(Shape::line(self.path_pos.to_vec(), 
+                                                Stroke::new(0.1*self.pixel_size, 
+                                                        Color32::BLACK)));
+                self.shapes.push(Shape::circle_filled(self.pointer_pos, 
+                                (0.1*self.pixel_size)/2.0, 
+                                Color32::BLACK));
+                if self.path_pos.len() == 2{
+                    let last_pos = self.path_pos.pop().unwrap();
+                    self.path_pos = Vec::new();
+                    self.path_pos.push(last_pos);
+                }
+            }
+            else {
+                self.path_pos = Vec::new();
+            }
+        }
+    }
+
+    fn move_shapes(&mut self) {
+        let difference_pos: Vec2 = Vec2::new(self.start_pointer_pos.x - self.pointer_pos.x, self.start_pointer_pos.y - self.pointer_pos.y);
+        
+    }
+    
 
 }
 
@@ -123,33 +166,34 @@ impl eframe::App for BaseWindow{
                         self.pointer_pos = local_pointer_pos.unwrap();
                         let primary_button_pressed = input.pointer.primary_down();
                         if primary_button_pressed {
-                            if self.pointer_pos.x != 0. && self.pointer_pos.y != 0.{
-                                let pointer_pos = self.pointer_pos;
-                                let min_pos = self.start_pos;
-                                let max_pos = self.end_pos;
-                                let bool_paint_r_t: bool = pointer_pos.x > min_pos.x && pointer_pos.y > min_pos.y;
-                                let bool_paint_l_b: bool = pointer_pos.x < max_pos.x && pointer_pos.y < max_pos.y;
-                                if bool_paint_l_b && bool_paint_r_t{
-                                    self.path_pos.push(pointer_pos);
-                                    self.shapes.push(Shape::line(self.path_pos.to_vec(), 
-                                                                    Stroke::new(0.1*self.pixel_size, 
-                                                                            Color32::BLACK)));
-                                    self.shapes.push(Shape::circle_filled(self.pointer_pos, 
-                                                    (0.1*self.pixel_size)/2.0, 
-                                                    Color32::BLACK));
-                                    if self.path_pos.len() == 2{
-                                        let last_pos = self.path_pos.pop().unwrap();
-                                        self.path_pos = Vec::new();
-                                        self.path_pos.push(last_pos);
+                            match self.tool {
+                                Tools::pen => {
+                                    self.paint()
+                                },
+                                Tools::hand => {
+                                    if self.start_pointer_pos.x != 0. && self.start_pointer_pos.y != 0.{
+                                        self.start_pointer_pos = self.pointer_pos;
                                     }
-                                }
-                                else {
-                                    self.path_pos = Vec::new();
-                                }
+                                    else {
+                                        self.move_shapes();
+                                    }
+                                },
+                                Tools::mouse => {},
+                                _ => {}
                             }
                         }
                         else{
-                            self.path_pos = Vec::new();
+                            match self.tool{
+                                Tools::pen => {
+                                    self.path_pos = Vec::new();
+                                },
+                                Tools::hand => {
+                                    self.start_pointer_pos = Pos2::ZERO
+                                },
+                                Tools::mouse => {},
+                                _ => {}
+                            }
+                            
                         }
                     }
                     else{
@@ -215,16 +259,30 @@ impl eframe::App for BaseWindow{
                 }
     
             });
-            });
+        });
     
-            egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             ui.horizontal(|ui_h: &mut egui::Ui|{
                 ui_h.label(format!("Pointer position: x: {} | y:{}", self.pointer_pos.x.floor(), self.pointer_pos.y.floor()));
                 if self.height.is_some() && self.width.is_some(){
                     ui_h.label(format!("Canvas size: height: {} | width:{}", self.height.unwrap(), self.width.unwrap()));
                 }
             });
+        });
+        egui::SidePanel::left("left_side panel").show(ctx, |ui|{
+            ui.vertical(|ui|{
+                if ui.button("Mouse").clicked(){
+                    self.tool = Tools::mouse
+                }
+                if ui.button("Hand").clicked(){
+                    self.tool = Tools::hand
+                }
+                if ui.button("Pen").clicked(){
+                    self.tool = Tools::pen
+                }
+
             });
+        });
 
     }
 }
