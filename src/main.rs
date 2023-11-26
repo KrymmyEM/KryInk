@@ -45,7 +45,7 @@ struct BaseWindow{
     pointer_pos: Pos2,
     zoom: f32,
     zoom_pos: Pos2,
-    origin_pos: Option<Vec2>,
+    origin_pos: Option<Pos2>,
     tool: Tools
 }
 
@@ -92,8 +92,8 @@ impl BaseWindow{
         let mut start_pos = Pos2::ZERO;
         let mut end_pos = Pos2::ZERO;
         if self.origin_pos.is_some(){
-            self.start_pos = self.origin_pos.unwrap().to_pos2();
-            self.end_pos = self.origin_pos.unwrap().to_pos2();
+            self.start_pos = self.origin_pos.unwrap();
+            self.end_pos = self.origin_pos.unwrap();
         }
         
         self.start_pos.x -= half_width * self.zoom;
@@ -157,7 +157,7 @@ impl eframe::App for BaseWindow{
                 origin_pos_local.x = ((self.monitor_data.x.floor()/2.0) as i32) as f32;
                 origin_pos_local.y = ((self.monitor_data.y.floor()/2.0) as i32) as f32;
                 println!("{:?}",origin_pos_local);
-                self.origin_pos = Some(origin_pos_local);
+                self.origin_pos = Some(origin_pos_local.to_pos2());
                 self.height = Some(origin_pos_local.y as f32);
                 self.width = Some(origin_pos_local.x as f32);
             }
