@@ -138,7 +138,10 @@ impl BaseWindow{
 
     fn move_shapes(&mut self) {
         let difference_pos: Vec2 = Vec2::new(self.start_pointer_pos.x - self.pointer_pos.x, self.start_pointer_pos.y - self.pointer_pos.y);
-        
+        let mut local_origin_pos: Vec2 = Vec2::ZERO;
+        if self.origin_pos.is_some(){
+            
+        }
     }
     
 
