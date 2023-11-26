@@ -218,6 +218,8 @@ impl eframe::App for BaseWindow{
             ui.label("Hello World! This is small paint");
             ui.horizontal(|ui_h: &mut egui::Ui|{
                 if ui_h.button("new").clicked(){
+                    self.start_pos = Pos2::ZERO;
+                    self.end_pos = Pos2::ZERO
                     self.height = None;
                     self.width = None;
                     self.path_pos = Vec::new();
