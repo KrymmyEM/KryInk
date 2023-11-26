@@ -89,8 +89,6 @@ impl BaseWindow{
     fn draw_canvas(&mut self, height: f32, width: f32){
         let half_height = height/2.0;
         let half_width = width/2.0;
-        let mut start_pos = Pos2::ZERO;
-        let mut end_pos = Pos2::ZERO;
         if self.origin_pos.is_some(){
             self.start_pos = self.origin_pos.unwrap();
             self.end_pos = self.origin_pos.unwrap();
