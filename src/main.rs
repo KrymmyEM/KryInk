@@ -38,7 +38,7 @@ struct BaseWindow{
     end_pos: Pos2,
     monitor_data: Vec2,
     path_pos: Vec<Pos2>,
-    canvas: Vec<Shape>,
+    canvas: Option<Shape>,
     canvas_ready: bool,
     shapes: Vec<Shape>,
     start_pointer_pos: Pos2,
@@ -59,8 +59,8 @@ impl BaseWindow{
             end_pos: Pos2::ZERO,
             monitor_data: Vec2::ZERO,
             path_pos: Vec::new(),
-            canvas: Vec::new(),
             canvas_ready: false,
+            canvas: None,
             shapes: Vec::new(),
             start_pointer_pos: Pos2::ZERO,
             pointer_pos: Pos2::ZERO,
@@ -103,7 +103,7 @@ impl BaseWindow{
             max:Pos2 { x: self.end_pos.x, y: self.end_pos.y}, }, 
             Rounding::default(),
                 Color32::WHITE);
-        self.canvas.push(shape);
+        self.canvas = Some(shape);
 
     }
     
@@ -136,9 +136,15 @@ impl BaseWindow{
 
     fn move_shapes(&mut self) {
         let difference_pos: Vec2 = Vec2::new(self.start_pointer_pos.x - self.pointer_pos.x, self.start_pointer_pos.y - self.pointer_pos.y);
-        let mut local_origin_pos: Vec2 = Vec2::ZERO;
+        self.start_pointer_pos = self.pointer_pos;
+        println!("{:?}", difference_pos);
+        let mut local_origin_pos: Pos2 = Pos2::ZERO;
         if self.origin_pos.is_some(){
-            
+            local_origin_pos = self.origin_pos.unwrap();
+            local_origin_pos.x -= difference_pos.x;
+            local_origin_pos.y -= difference_pos.y;
+            self.origin_pos = Some(local_origin_pos);
+            self.canvas_ready = false;
         }
     }
     
@@ -172,7 +178,7 @@ impl eframe::App for BaseWindow{
                                     self.paint()
                                 },
                                 Tools::hand => {
-                                    if self.start_pointer_pos.x != 0. && self.start_pointer_pos.y != 0.{
+                                    if self.start_pointer_pos.x == 0.0 && self.start_pointer_pos.y == 0.0{
                                         self.start_pointer_pos = self.pointer_pos;
                                     }
                                     else {
@@ -204,10 +210,12 @@ impl eframe::App for BaseWindow{
             });
             if self.height.is_some() && self.width.is_some() && !self.canvas_ready {
                 self.draw_canvas(self.height.unwrap(), self.width.unwrap());
-                self.canvas_ready = !self.canvas_ready;
+                self.canvas_ready = true;
             }
 
-            painter.extend(self.canvas.clone().into_iter());
+            if self.canvas.is_some(){
+                painter.add(self.canvas.clone().unwrap());
+            }
             painter.extend(self.shapes.clone().into_iter());
 
         });
@@ -218,10 +226,10 @@ impl eframe::App for BaseWindow{
                 if ui_h.button("new").clicked(){
                     self.start_pos = Pos2::ZERO;
                     self.end_pos = Pos2::ZERO;
+                    self.canvas = None;
                     self.height = None;
                     self.width = None;
                     self.path_pos = Vec::new();
-                    self.canvas = Vec::new();
                     self.shapes = Vec::new();
                 }
                 if ui_h.button("increase 1 pix").clicked(){
@@ -270,6 +278,10 @@ impl eframe::App for BaseWindow{
                 if self.height.is_some() && self.width.is_some(){
                     ui_h.label(format!("Canvas size: height: {} | width:{}", self.height.unwrap(), self.width.unwrap()));
                 }
+                if self.origin_pos.is_some(){
+                    ui_h.label(format!("Origin: {:?}", self.origin_pos.unwrap()));
+                }
+                ui_h.label(format!("st: {:?}", self.start_pointer_pos));
             });
         });
         egui::SidePanel::left("left_side panel").show(ctx, |ui|{
