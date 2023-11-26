@@ -146,6 +146,14 @@ impl BaseWindow{
             self.origin_pos = Some(local_origin_pos);
             self.canvas_ready = false;
         }
+
+        let mut local_shapes: Vec<Shape> = Vec::new();
+        for mut shape in self.shapes.clone().into_iter() {
+            shape.translate(-difference_pos);
+            local_shapes.push(shape);
+        }
+        self.shapes = local_shapes;
+
     }
     
 
