@@ -2,22 +2,17 @@
 
 //text
 
-use std::default;
-
 use eframe::glow::HasContext;
 use eframe::{egui, glow};
 use egui::epaint::{PathShape, image::ColorImage};
-use egui::{Pos2, Rect, Painter, Shape, Color32, Rounding, Stroke, ViewportInfo, Vec2, Style};
+use egui::{Pos2, Rect, Painter, Shape, Color32, Rounding, Stroke, ViewportInfo, Vec2, Style, viewport};
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
-    let title: &str = "KryInk";
-    let viewport: egui::ViewportBuilder = egui::ViewportBuilder{
-        title: Some(title.to_string()),
-        fullscreen: Some(true),
-        ..Default::default()
-    };
-    
+	let title: &str = "KryInk";
+    let mut viewport = egui::ViewportBuilder::default();
+    viewport.title = Some(title.to_string());
+    viewport.maximized = Some(true);
     let options = eframe::NativeOptions{
         viewport: viewport,
         multisampling: 4,
@@ -110,7 +105,7 @@ impl BaseWindow{
         let shape = Shape::rect_filled(Rect { min:Pos2 { x: self.start_pos.x, y: self.start_pos.y}, 
             max:Pos2 { x: self.end_pos.x, y: self.end_pos.y}, }, 
             Rounding::default(),
-            Color32::WHITE);
+                Color32::WHITE);
         self.canvas = Some(shape);
 
     }
@@ -169,7 +164,7 @@ impl BaseWindow{
 
 impl eframe::App for BaseWindow{
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame){
-        ctx.set_visuals(egui::Visuals::dark());
+		ctx.set_visuals(egui::style::Visuals::dark());
         egui::CentralPanel::default().show(ctx, |ui| {
             if self.origin_pos.is_none(){
                 self.monitor_data = ui.available_size();
