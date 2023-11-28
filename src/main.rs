@@ -182,7 +182,7 @@ impl eframe::App for BaseWindow{
                 if input.pointer.is_moving(){
                     let local_pointer_pos = input.pointer.hover_pos();
                     if local_pointer_pos.is_some(){
-                        self.pointer_pos = local_pointer_pos.unwrap();
+                        self.pointer_pos = Pos2::new(local_pointer_pos.unwrap().x as i32 as f32, local_pointer_pos.unwrap().y as i32 as f32);
                     }
                     else{
                         self.pointer_pos = Pos2::ZERO;
