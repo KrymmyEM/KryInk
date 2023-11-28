@@ -183,7 +183,14 @@ impl eframe::App for BaseWindow{
                     let local_pointer_pos = input.pointer.hover_pos();
                     if local_pointer_pos.is_some(){
                         self.pointer_pos = local_pointer_pos.unwrap();
-                        let primary_button_pressed = input.pointer.primary_down();
+                    }
+                    else{
+                        self.pointer_pos = Pos2::ZERO;
+                    }
+                }
+            });
+            ctx.input(|input|{
+                let primary_button_pressed = input.pointer.primary_down();
                         if primary_button_pressed {
                             match self.tool {
                                 Tools::pen => {
@@ -214,11 +221,6 @@ impl eframe::App for BaseWindow{
                             }
                             
                         }
-                    }
-                    else{
-                        self.pointer_pos = Pos2::ZERO;
-                    }
-                }
             });
             if self.height.is_some() && self.width.is_some() && !self.canvas_ready {
                 self.draw_canvas(self.height.unwrap(), self.width.unwrap());

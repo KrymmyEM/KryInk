@@ -3,6 +3,15 @@
 version = 3
 
 [[package]]
+name = "KryInk"
+version = "0.1.0"
+dependencies = [
+ "eframe",
+ "egui",
+ "env_logger",
+]
+
+[[package]]
 name = "ab_glyph"
 version = "0.2.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1341,15 +1350,6 @@ name = "khronos_api"
 version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
-
-[[package]]
-name = "kryink"
-version = "0.1.0"
-dependencies = [
- "eframe",
- "egui",
- "env_logger",
-]
 
 [[package]]
 name = "lazy_static"
